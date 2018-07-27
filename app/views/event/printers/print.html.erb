@@ -1,0 +1,44 @@
+<div class="card">
+  <div class="card-block">
+    <h1 class="card-title">Nombre:</h1>
+    <input type="text" name="" value="" id="nombre" class="form-controls">
+    <button type="button" name="button" id="enviar_nombre" class="btn btn-primary">enviar</button>
+  </div>
+</div>
+<script type="text/javascript">
+  // Pusher setup
+  var pusher = new Pusher('539a5f2700194b31fcf1', {encrypted: true});
+  var channel = pusher.subscribe('printer-channel');
+  var label_xml = `<%= raw current_event.label_xml %>`;
+  var label = dymo.label.framework.openLabelXml(labelXml);
+
+  // Get printer
+  var printers = dymo.label.framework.getPrinters();
+  if (printers.length === 0)
+    console.warn("No DYMO printers are installed. Install DYMO printers.");
+  var printerName = "";
+  for (var i = 0; i < printers.length; ++i) {
+    var printer = printers[i];
+    if (printer.printerType == "LabelWriterPrinter") {
+      printerName = printer.name;
+      break;
+    }
+  }
+  // print from the view
+  $("#enviar_nombre").click(function () {
+      enviar_impresora($("#nombre").val());
+  });
+
+  // print  
+  function enviar_impresora(nombre){
+    if( nombre.length > 1 ){
+    label.setObjectText("Name", nombre);
+    label.print(printerName);
+    }
+  }
+
+  // what to do when printer message received
+  channel.bind('printer', function (data) {
+    enviar_impresora(data.user.name.split(' ')[0]);
+  });
+</script>
